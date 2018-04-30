@@ -20,9 +20,12 @@ function Grammarify(){
             var words = string.split(" ");
             var newWords = words.filter(w => w.length !== 0);
 
+            // Fix stretched words
+            newWords = smsMap.fixStretching(newWords);
+
             // Replace shorthand/improper grammar
             // the spellchecker might miss
-            newWords = smsMap.transform(newWords);
+            newWords = smsMap.fixShorthand(newWords);
 
             // Save where there is existing punctuation
             var endingPunctuation = [];
@@ -43,7 +46,6 @@ function Grammarify(){
             // main logic loop
             var duplicates = ["the", "a", "an", "and", "but", "or", "nor", "for", "so", "yet"];
             var corrections = [];
-            var periodsIndex = -1;
             var endingPunctuationIndex = false;
             var lastCharacter = "";
             for (var i = 0; i < newWords.length; i++){
@@ -76,23 +78,22 @@ function Grammarify(){
                     newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substr(1);
                 }
 
-                // Add ending period if necessary
-                if (i === newWords.length - 1){
-                    
-                    // Only if the word doesn't already end in punctuation
-                    lastCharacter = newWords[i][newWords[i].length-1];
-                    if (lastCharacter !== "." &&
-                        lastCharacter !== "!" &&
-                        lastCharacter !== "?"){
-                            newWords[i] = newWords[i] + ".";
-                        }
-                }
-
                 // Add leading space to word
                 if (i !== 0){
                     newWords[i] = " " + newWords[i];
                 }
             }
+
+            // Add ending period if necessary
+            var lastWord = newWords.length - 1;
+
+            // Only if the word doesn't already end in punctuation
+            lastCharacter = newWords[lastWord][newWords[lastWord].length-1];
+            if (lastCharacter !== "." &&
+                lastCharacter !== "!" &&
+                lastCharacter !== "?"){
+                    newWords[lastWord] = newWords[lastWord] + ".";
+                }
 
             return newWords.join("");
         }
@@ -116,6 +117,7 @@ function Grammarify_SMS(){
         "btw": "by the way",
 
         // C
+        "cuz": "because",
 
         // D
 
@@ -151,6 +153,7 @@ function Grammarify_SMS(){
 
         // M
         "m": "male",
+        "msg": "message",
 
         // N
         "nite": "night",
@@ -181,7 +184,10 @@ function Grammarify_SMS(){
         // V
 
         // W
+        "w": "with",
         "wanna": "want to",
+        "whaat": "what", // spellchecker library thinks this is a word
+        "whaaat": "what", // spellchecker library thinks this is a word
         "wk": "week",
         "wks": "weeks",
         "wtf": "what the fuck",
@@ -197,8 +203,120 @@ function Grammarify_SMS(){
         
     };
 
+    var unstretchify = function(word, indicees, pivot){
+
+        // Base cases;
+        // word matches to a shorthand map we have defined
+        if (typeof map[word] !== "undefined"){
+            return map[word];
+        } else if (!spellchecker.isMisspelled(word)){
+            
+            // The word is not misspelled
+            return word;
+        } else if (indicees.reduce((acc, cur) => {return acc + (cur.endIndex - cur.startIndex);}, 0) === 0){
+            
+            // Above check could use optimization;
+            // exit if we've iterated fully over
+            // this particular pivot value
+            return "";
+        } else {
+
+            // Alter indicees array
+            var indiceesArrayIndex = pivot > 0 ? pivot - 1 : indicees.length-1;
+
+            if (indicees[indiceesArrayIndex].endIndex > indicees[indiceesArrayIndex].startIndex){
+                indicees[indiceesArrayIndex].endIndex = indicees[indiceesArrayIndex].endIndex - 1;
+
+                // Chop off duplicate letter in word,
+                // this is how we work to the base case
+                word = word.substr(0, indicees[indiceesArrayIndex].startIndex) + word.substr(indicees[indiceesArrayIndex].startIndex+1);
+            } else {
+
+                // Change the pivot
+                if (pivot > 0){
+                    pivot = pivot - 1;
+                } else {
+                    pivot = indicees.length - 1;
+                }
+            }
+
+            return unstretchify(word, indicees, pivot);
+        }
+    };
+
     return {
-        transform: function(input){
+        fixStretching: function(input){
+            var container = [];
+
+            // Create the data we are transforming
+            if (Array.isArray(input)){
+                container = input;
+            } else if (typeof input === "string"){
+                container = input.split(" ");
+            } else {
+                return "";
+            }
+
+            // Fix the input
+            var stretchedIndicees = [];
+            var lastMarkedChar = "";
+            var tempWord = "";
+            for (var i = 0; i < container.length; i++){
+
+                // Identify stretched characters within the word
+                for (var j = 0; j < container[i].length; j++){
+
+                    if (j > 0){
+
+                        // Save information about stretched letters
+                        // ie. "preettyyyy"
+                        if (container[i][j] === container[i][j-1]){
+
+                            if (lastMarkedChar === ""){
+                                stretchedIndicees.push({
+                                    "startIndex": j-1,
+                                    "endIndex": j 
+                                });
+                                lastMarkedChar = container[i][j];
+                            } else {
+                                stretchedIndicees[stretchedIndicees.length-1]["endIndex"] = j; 
+                            }                                                                      
+                        } else {
+                            lastMarkedChar = "";
+                        }
+                    }
+                }
+
+
+                // Only fix word if it isn't shorthand and
+                // it is incorrect
+                if (stretchedIndicees.length > 0 &&
+                    typeof container[i] !== "undefined" &&
+                    spellchecker.isMisspelled(container[i])){
+
+                    var fixed = "";
+                    var staticIndicees = JSON.parse(JSON.stringify(stretchedIndicees)); // Deep copy array
+ 
+                    for (var pivot = 0; pivot < staticIndicees.length; pivot++){
+                        fixed = unstretchify(container[i], staticIndicees, pivot);
+
+                        if (fixed !== ""){
+                            container[i] = fixed;
+                            break;
+                        }
+
+                        // Reset w/ deep copy
+                        staticIndicees = JSON.parse(JSON.stringify(stretchedIndicees));
+                    }
+                }
+
+                stretchedIndicees = [];
+                lastMarkedChar = "";
+            }
+
+            return container;
+        },
+        fixShorthand: function(input){
             var punctuation = "";
             var container = [];
             var stripped = "";
@@ -212,11 +330,11 @@ function Grammarify_SMS(){
                 return "";
             }
 
-            // Transform our data
+            // Fix the input
             for (var i = 0; i < container.length; i++){
 
                 // Save existing punctuation
-                stripped = container[i].match(/([a-zA-Z0-9']*)([\?!\.;]*)$/);
+                stripped = container[i].match(/([a-zA-Z0-9']*)([\?!\.;+]*)$/);
                 if (typeof stripped[2] !== ""){
                     punctuation = stripped[2];
                 }
