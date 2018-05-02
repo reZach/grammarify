@@ -17,6 +17,11 @@ function Grammarify(){
 
             //console.log(spellchecker.getCorrectionsForMisspelling("ref"));
 
+            // Replace unicode characters that break parsing
+            string = string
+                .replace(/[\u2018\u2019]/g, "'")
+                .replace(/[\u201C\u201D]/g, '"');
+
             // Get rid of all whitespace
             var words = string.split(" ");
             var newWords = words.filter(w => w.length !== 0);
