@@ -6,6 +6,7 @@ function Grammarify(){
 
     // Private variables
     var smsMap = new Grammarify_SMS();
+    var disconnectedMap = new Grammarify_Disconnected();
     var numberMap = new Grammarify_Numbers();
 
     return {
@@ -20,12 +21,34 @@ function Grammarify(){
             var words = string.split(" ");
             var newWords = words.filter(w => w.length !== 0);
 
+            // Fix words that may have periods within it;
+            // these should be marked as end of sentences
+            // ie. "a boy said that.He was" -->
+            //     "a boy said that. He was"
+            var period = 0;
+            for (var i = 0; i < newWords.length; i++){
+                period = newWords[i].indexOf(".");
+
+                if (period > 0 &&
+                    newWords[i].length > (period + 1) &&
+                    newWords[i].match(/\.\w/) !== null){
+                        
+                        // Split word into 2
+                        newWords.splice(i + 1, 0, newWords[i].substr(period + 1));
+                        newWords[i] = newWords[i].substr(0, period + 1);
+                    }
+            }
+
             // Fix stretched words
             newWords = smsMap.fixStretching(newWords);
 
             // Replace shorthand/improper grammar
             // the spellchecker might miss
             newWords = smsMap.fixShorthand(newWords);
+
+            // Fix words that should really be
+            // one word instead of two
+            newWords = disconnectedMap.fixSeparated(newWords);
 
             // Save where there is existing punctuation
             var endingPunctuation = [];
@@ -40,7 +63,7 @@ function Grammarify(){
                     endingPunctuation.push("");
                 }
             }
-            
+
             
             // Clean the sentence;
             // main logic loop
@@ -145,6 +168,7 @@ function Grammarify_SMS(){
         "idk": "I don't know",
 
         // J
+        "jude": "Jude", // how to expand this to all proper nouns??
 
         // K
         "kinda": "kind of",
@@ -347,6 +371,101 @@ function Grammarify_SMS(){
                     if (punctuation !== ""){
                         container[i] = container[i] + punctuation;
                         punctuation = "";
+                    }
+                }
+            }
+
+            return container;
+        }
+    }
+}
+
+function Grammarify_Disconnected(){
+    
+    var list = [
+        // A
+
+        // B
+
+        // C
+
+        // D
+
+        // E
+
+        // F
+
+        // G
+
+        // H
+        "herself",
+        "himself",
+
+        // I
+
+        // J
+
+        // K
+
+        // L
+
+        // M
+
+        // N
+
+        // O
+
+        // P
+
+        // Q
+
+        // R
+
+        // S
+
+        // T
+        "today"
+
+        // U
+
+        // V
+
+        // W
+
+        // X
+
+        // Y
+
+        // Z
+    ];
+    
+    return {
+        fixSeparated: function(input){
+            var punctuation = "";
+            var container = [];
+            var stripped = "";
+
+            // Create the data we are transforming
+            if (Array.isArray(input)){
+                container = input;
+            } else if (typeof input === "string"){
+                container = input.split(" ");
+            } else {
+                return "";
+            }
+
+            // Fix the input
+            var listIndex = 0;
+            if (container.length > 1){
+                for (var i = 1; i < container.length; i++){
+
+                    // If we found a match
+                    listIndex = list.indexOf(container[i-1] + container[i]);
+                    if (listIndex >= 0){
+                        container[i-1] = list[listIndex];
+
+                        container.splice(i, 1);
+                        i--;
                     }
                 }
             }
