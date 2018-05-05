@@ -1,13 +1,19 @@
 {
   "name": "grammarify",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.0.2",
+  "description": "Grammarify is a npm package that performs safe cleaning of text. Examples of safe cleaning include capitalizing the beginning of sentences, spellchecking mispelled words, changing SMS-speak to full words, fixed stretched words (ie. 'borrreedd'), removing lexical illusions (ie. multiple 'the the dog') and combining words that are mistaken separated (ie. 'her self' to 'herself').",
+  "keywords": [
+    "spelling",
+    "grammar",
+    "punctuation",
+    "proofread"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "spellchecker": "3.4.4"
   }
