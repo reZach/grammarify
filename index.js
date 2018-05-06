@@ -15,7 +15,6 @@ function Grammarify(){
                 return "";
             }
 
-            //console.log(spellchecker.getCorrectionsForMisspelling("ref"));
 
             // Replace unicode characters that break parsing
             string = string
@@ -68,7 +67,7 @@ function Grammarify(){
                     endingPunctuation.push("");
                 }
             }
-
+            
             
             // Clean the sentence;
             // main logic loop
@@ -80,8 +79,8 @@ function Grammarify(){
 
                 // Remove words that are safe to delete if duplicated after each other
                 if (i > 0 && 
-                    newWords[i] === newWords[i-1].substring(1) &&
-                    duplicates.indexOf(newWords[i]) >= 0){
+                    newWords[i] === newWords[i-1].trim().toLowerCase() &&
+                    duplicates.indexOf(newWords[i].toLowerCase()) >= 0){
 
                     newWords.splice(i, 1);
                     i--;
