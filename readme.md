@@ -57,5 +57,10 @@ _(Intended ellipsis are any two or more periods separated by any number of perio
 "I was thinking yesterday..that I should go outside." -> "I was thinking yesterday... that I should go outside." 
 ```
 
+##### Add spaces between comma/semicolon/colon-separated words
+```
+"She likes to eat,cook,clean and dance!" -> "She likes to eat, cook, clean and dance!"
+```
+
 ### Bugs or suggestions?
 Go to our [Github page](https://github.com/reZach/grammarify).

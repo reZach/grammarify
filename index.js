@@ -5,6 +5,7 @@ exports = module.exports = new Grammarify();
 function Grammarify(){
 
     // Private variables
+    var preProcessMap = new Grammarify_PreProcess();
     var smsMap = new Grammarify_SMS();
     var disconnectedMap = new Grammarify_Disconnected();
     var numberMap = new Grammarify_Numbers();
@@ -21,42 +22,10 @@ function Grammarify(){
                 .replace(/[\u2018\u2019]/g, "'")
                 .replace(/[\u201C\u201D]/g, '"');
 
-            // Fix any bad periods/use of them;
-            // first remove any leading spaces/periods
-            string = string.replace(/^[ \.]+/g, "");
-            
-            var badPeriods = string.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
-            var badPeriodsIndex = 0;
-            var tempSearch = "";
-            
-            if (badPeriods !== null){
-                for (var i = 0; i < badPeriods.length; i++){
-                    badPeriodsIndex = string.indexOf(badPeriods[i], badPeriodsIndex);
-
-                    // If we only find a single period;
-                    // ie. "the pig.ran"
-                    //     "the pig .ran"
-                    //     "the pig . ran"
-                    if (badPeriods[i].split(".").length == 2){
-                        tempSearch = string.substr(badPeriodsIndex);
-                        tempSearch = tempSearch.replace(badPeriods[i], ". ");
-                        string = string.substr(0, badPeriodsIndex) + tempSearch;
-
-                        badPeriodsIndex++;
-                    } else if (badPeriods[i].split(".").length >= 3){
-                        
-                        // If we find an ellipsis-like pattern;
-                        // ie. "the pig..ran"
-                        //     "the pig ..ran"
-                        //     "the pig .. ran"
-                        tempSearch = string.substr(badPeriodsIndex);
-                        tempSearch = tempSearch.replace(badPeriods[i], "... ");
-                        string = string.substr(0, badPeriodsIndex) + tempSearch;
-
-                        badPeriodsIndex++;
-                    }
-                }
-            }
+            // Run through pre-processing;
+            // fixing periods and other characters
+            string = preProcessMap.fixPeriodAndEllipsis(string);
+            string = preProcessMap.fixSpaceAfterCharacter(string);
 
             // Get rid of all whitespace
             var words = string.split(" ");
@@ -109,7 +78,7 @@ function Grammarify(){
                 // Spellcheck words
                 if (spellchecker.isMisspelled(newWords[i])){
                     corrections = spellchecker.getCorrectionsForMisspelling(newWords[i]);
-
+                    
                     if (corrections.length > 0){
                         newWords[i] = corrections[0];
                         corrections = [];
@@ -144,6 +113,92 @@ function Grammarify(){
             return newWords.join("");
         }
     }    
+}
+
+function Grammarify_PreProcess(){
+
+    // Valid characters to fix;
+    // cannot be duplicated
+    var validCharsToFix = [",", ";", ":", "%"];
+
+    var fixer = function(input, charToFix){
+        
+        // Remove this character from the beginning of the string
+        var regex = new RegExp("^[ \\" + charToFix + ".]+", "g");
+        input = input.replace(regex, "");
+
+        // Capture all instances of this character
+        regex = new RegExp("\\b([ \\" + charToFix + "]*\\" + charToFix + "[ \\" + charToFix + "]*)(\\b|$)", "g");
+        var badMatches = input.match(regex);
+        var badMatchesIndex = 0;
+        var tempSearch = "";
+
+        if (badMatches !== null){
+            for (var i = 0; i < badMatches.length; i++){
+                badMatchesIndex = input.indexOf(badMatches[i], badMatchesIndex);
+
+                tempSearch = input.substr(badMatchesIndex);
+                tempSearch = tempSearch.replace(badMatches[i], (charToFix + " "));
+                input = input.substr(0, badMatchesIndex) + tempSearch;
+
+                badMatchesIndex++;
+            }
+        }
+
+        return input;
+    };
+
+    return {
+        fixPeriodAndEllipsis: function(input){
+
+            // Remove periods from the beginning of the string
+            input = input.replace(/^[ \.]+/g, "");
+            
+            var badPeriods = input.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
+            var badPeriodsIndex = 0;
+            var tempSearch = "";
+            
+            if (badPeriods !== null){
+                for (var i = 0; i < badPeriods.length; i++){
+                    badPeriodsIndex = input.indexOf(badPeriods[i], badPeriodsIndex);
+
+                    // If we only find a single period;
+                    // ie. "the pig.ran"
+                    //     "the pig .ran"
+                    //     "the pig . ran"
+                    if (badPeriods[i].split(".").length == 2){
+                        tempSearch = input.substr(badPeriodsIndex);
+                        tempSearch = tempSearch.replace(badPeriods[i], ". ");
+                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+
+                        badPeriodsIndex++;
+                    } else if (badPeriods[i].split(".").length >= 3){
+                        
+                        // If we find an ellipsis-like pattern;
+                        // ie. "the pig..ran"
+                        //     "the pig ..ran"
+                        //     "the pig .. ran"
+                        tempSearch = input.substr(badPeriodsIndex);
+                        tempSearch = tempSearch.replace(badPeriods[i], "... ");
+                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+
+                        badPeriodsIndex++;
+                    }
+                }
+            }
+
+            return input;
+        },
+        fixSpaceAfterCharacter: function(input){
+
+            // Process all characters we can fix
+            for (var i = 0; i < validCharsToFix.length; i++){
+                input = fixer(input, validCharsToFix[i]);
+            }
+
+            return input;
+        }
+    }
 }
 
 function Grammarify_SMS(){
