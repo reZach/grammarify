@@ -1,11 +1,11 @@
-Grammarify is a npm package that performs safe cleaning of text. The types of text cleaning Grammarify does are listed below.
+Grammarify is a npm package that safely cleans up text that has mispellings, improper capitalization, lexical illusions, among other things. 
 
 ### How to use
 ```
 var grammarify = require("grammarify");
 
 var sentence = "I'm so borrreeedddd";
-console.log(grammarify.clean(sentence));
+console.log(grammarify.clean(sentence)); // "I'm so bored."
 ```
 
 ### Features
@@ -31,7 +31,7 @@ _(Some words are grammatically correct if repeated twice, words that are not are
 "I like to run. he runs faster than I." -> "I like to run. He runs faster than I."
 ```
 
-##### Change SMS to full words
+##### Change SMS/shorthand to full words
 ```
 "Meet me at home asap." -> "Meet me at home as soon as possible."
 ```
@@ -49,6 +49,12 @@ _(Some words are grammatically correct if repeated twice, words that are not are
 ##### Split up sentences if connected
 ```
 "Writing C# code is fun.It is much better than Java." -> "Writing C# code is fun. It is much better than Java."
+```
+
+##### Fix intended ellipsis
+_(Intended ellipsis are any two or more periods separated by any number of periods and/or spaces)_
+```
+"I was thinking yesterday..that I should go outside." -> "I was thinking yesterday... that I should go outside." 
 ```
 
 ### Bugs or suggestions?

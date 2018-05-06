@@ -4,9 +4,12 @@
   "description": "Grammarify is a npm package that performs safe cleaning of text. Examples of safe cleaning include capitalizing the beginning of sentences, spellchecking mispelled words, changing SMS-speak to full words, fixed stretched words (ie. 'borrreedd'), removing lexical illusions (ie. multiple 'the the dog') and combining words that are mistaken separated (ie. 'her self' to 'herself').",
   "keywords": [
     "spelling",
+    "spellcheck",
     "grammar",
     "punctuation",
-    "proofread"
+    "proofread",
+    "clean-text",
+    "clean-sentences"
   ],
   "main": "index.js",
   "scripts": {

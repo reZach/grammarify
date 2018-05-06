@@ -21,27 +21,46 @@ function Grammarify(){
                 .replace(/[\u2018\u2019]/g, "'")
                 .replace(/[\u201C\u201D]/g, '"');
 
+            // Fix any bad periods/use of them;
+            // first remove any leading spaces/periods
+            string = string.replace(/^[ \.]+/g, "");
+            
+            var badPeriods = string.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
+            var badPeriodsIndex = 0;
+            var tempSearch = "";
+            
+            if (badPeriods !== null){
+                for (var i = 0; i < badPeriods.length; i++){
+                    badPeriodsIndex = string.indexOf(badPeriods[i], badPeriodsIndex);
+
+                    // If we only find a single period;
+                    // ie. "the pig.ran"
+                    //     "the pig .ran"
+                    //     "the pig . ran"
+                    if (badPeriods[i].split(".").length == 2){
+                        tempSearch = string.substr(badPeriodsIndex);
+                        tempSearch = tempSearch.replace(badPeriods[i], ". ");
+                        string = string.substr(0, badPeriodsIndex) + tempSearch;
+
+                        badPeriodsIndex++;
+                    } else if (badPeriods[i].split(".").length >= 3){
+                        
+                        // If we find an ellipsis-like pattern;
+                        // ie. "the pig..ran"
+                        //     "the pig ..ran"
+                        //     "the pig .. ran"
+                        tempSearch = string.substr(badPeriodsIndex);
+                        tempSearch = tempSearch.replace(badPeriods[i], "... ");
+                        string = string.substr(0, badPeriodsIndex) + tempSearch;
+
+                        badPeriodsIndex++;
+                    }
+                }
+            }
+
             // Get rid of all whitespace
             var words = string.split(" ");
             var newWords = words.filter(w => w.length !== 0);
-
-            // Fix words that may have periods within it;
-            // these should be marked as end of sentences
-            // ie. "a boy said that.He was" -->
-            //     "a boy said that. He was"
-            var period = 0;
-            for (var i = 0; i < newWords.length; i++){
-                period = newWords[i].indexOf(".");
-
-                if (period > 0 &&
-                    newWords[i].length > (period + 1) &&
-                    newWords[i].match(/\.\w/) !== null){
-                        
-                        // Split word into 2
-                        newWords.splice(i + 1, 0, newWords[i].substr(period + 1));
-                        newWords[i] = newWords[i].substr(0, period + 1);
-                    }
-            }
 
             // Fix stretched words
             newWords = smsMap.fixStretching(newWords);
