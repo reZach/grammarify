@@ -63,6 +63,9 @@ function Grammarify(){
             var corrections = [];
             var endingPunctuationIndex = false;
             var lastCharacter = "";
+            var spcheckThisWord = "";
+            var preSpellcheck = "";
+            var preSpellcheckEndingPunct = "";
             for (var i = 0; i < newWords.length; i++){
 
                 // Remove words that are safe to delete if duplicated after each other
@@ -75,13 +78,26 @@ function Grammarify(){
                     continue;
                 }
 
-                // Spellcheck words
-                if (spellchecker.isMisspelled(newWords[i])){
-                    corrections = spellchecker.getCorrectionsForMisspelling(newWords[i]);
+                // Spellcheck words;
+                // remove ending punctuation first
+                preSpellcheck = newWords[i].match(/[\.\?\!]+$/g);
+
+                if (preSpellcheck !== null){
+                    spcheckThisWord = newWords[i].replace(/[\.\?\!]+$/g, "");
+                } else {
+                    spcheckThisWord = newWords[i];
+                }
+                if (spellchecker.isMisspelled(spcheckThisWord)){
+                    corrections = spellchecker.getCorrectionsForMisspelling(spcheckThisWord);
                     
                     if (corrections.length > 0){
                         newWords[i] = corrections[0];
                         corrections = [];
+
+                        // Add ending punctuation back in
+                        if (preSpellcheck !== null){
+                            newWords[i] = newWords[i] + preSpellcheck[0];
+                        }
                     }
                 }
 
@@ -161,7 +177,7 @@ function Grammarify_PreProcess(){
             if (badPeriods !== null){
                 for (var i = 0; i < badPeriods.length; i++){
                     badPeriodsIndex = input.indexOf(badPeriods[i], badPeriodsIndex);
-
+                    
                     // If we only find a single period;
                     // ie. "the pig.ran"
                     //     "the pig .ran"
@@ -186,7 +202,7 @@ function Grammarify_PreProcess(){
                     }
                 }
             }
-
+            
             return input;
         },
         fixSpaceAfterCharacter: function(input){
@@ -462,6 +478,7 @@ function Grammarify_Disconnected(){
     
     var list = [
         // A
+        "awesome",
 
         // B
 
@@ -470,6 +487,7 @@ function Grammarify_Disconnected(){
         // D
 
         // E
+        "everything",
 
         // F
 
@@ -490,6 +508,7 @@ function Grammarify_Disconnected(){
         // M
 
         // N
+        "nowhere",
 
         // O
 
@@ -538,7 +557,7 @@ function Grammarify_Disconnected(){
                 for (var i = 1; i < container.length; i++){
 
                     // If we found a match
-                    listIndex = list.indexOf(container[i-1] + container[i]);
+                    listIndex = list.indexOf((container[i-1] + container[i]).toLowerCase());
                     if (listIndex >= 0){
                         container[i-1] = list[listIndex];
 
