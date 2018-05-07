@@ -1,14 +1,16 @@
-Grammarify is a npm package that safely cleans up text that has mispellings, improper capitalization, lexical illusions, among other things. 
+Grammarify is a npm package that safely cleans up text that has mispellings, improper capitalization, lexical illusions, among other things.
+ 
 
-### How to use
+## How to use
 ```
 var grammarify = require("grammarify");
 
 var sentence = "I'm so borrreeedddd";
 console.log(grammarify.clean(sentence)); // "I'm so bored."
 ```
+---
 
-### Features
+## Features
 
 ##### Automatically add periods at the end of sentences
 ```
@@ -61,6 +63,7 @@ _(Intended ellipsis are any two or more periods separated by any number of perio
 ```
 "She likes to eat,cook,clean and dance!" -> "She likes to eat, cook, clean and dance!"
 ```
+---
 
-### Bugs or suggestions?
+## Bugs or suggestions?
 Go to our [Github page](https://github.com/reZach/grammarify).
