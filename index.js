@@ -80,10 +80,10 @@ function Grammarify(){
 
                 // Spellcheck words;
                 // remove ending punctuation first
-                preSpellcheck = newWords[i].match(/[\.\?\!]+$/g);
+                preSpellcheck = newWords[i].match(/[\W]+$/g);
 
                 if (preSpellcheck !== null){
-                    spcheckThisWord = newWords[i].replace(/[\.\?\!]+$/g, "");
+                    spcheckThisWord = newWords[i].replace(/[\W]+$/g, "");
                 } else {
                     spcheckThisWord = newWords[i];
                 }
