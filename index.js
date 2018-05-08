@@ -260,6 +260,7 @@ function Grammarify_SMS(){
 
         // I
         "idk": "I don't know",
+        "im": "I'm",
 
         // J
         "jude": "Jude", // how to expand this to all proper nouns??
@@ -521,7 +522,7 @@ function Grammarify_Disconnected(){
         // S
 
         // T
-        "today"
+        "today",
 
         // U
 
@@ -532,6 +533,7 @@ function Grammarify_Disconnected(){
         // X
 
         // Y
+        "yourself"
 
         // Z
     ];

@@ -5,7 +5,7 @@ Grammarify is a npm package that safely cleans up text that has mispellings, imp
 ```
 var grammarify = require("grammarify");
 
-var sentence = "I'm so borrreeedddd";
+var sentence = "im so   borrreeedddd";
 console.log(grammarify.clean(sentence)); // "I'm so bored."
 ```
 ---
@@ -62,6 +62,11 @@ _(Intended ellipsis are any two or more periods separated by any number of perio
 ##### Add spaces between comma/semicolon/colon-separated words
 ```
 "She likes to eat,cook,clean and dance!" -> "She likes to eat, cook, clean and dance!"
+```
+
+##### Fix extra spaces in between words
+```
+"Wow  what an  extra long coat!" -> "Wow what an extra long coat!"
 ```
 ---
 
