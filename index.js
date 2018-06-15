@@ -154,7 +154,17 @@ function Grammarify_PreProcess(){
                 badMatchesIndex = input.indexOf(badMatches[i], badMatchesIndex);
 
                 tempSearch = input.substr(badMatchesIndex);
-                tempSearch = tempSearch.replace(badMatches[i], (charToFix + " "));
+
+                // Corner-case;
+                // don't add space if fixing this
+                // 3,,000
+                if (badMatchesIndex + badMatches[i].length < input.length &&
+                    input[badMatchesIndex + badMatches[i].length + 1].match(/\d/) !== null){
+                    tempSearch = tempSearch.replace(badMatches[i], charToFix);
+                } else {
+                    tempSearch = tempSearch.replace(badMatches[i], (charToFix + " "));
+                }
+                
                 input = input.substr(0, badMatchesIndex) + tempSearch;
 
                 badMatchesIndex++;
