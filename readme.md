@@ -77,4 +77,5 @@ _(Intended ellipsis are any two or more periods separated by any number of perio
 
 ## Bugs or suggestions?
 Go to our [Github page](https://github.com/reZach/grammarify).
+
 Our [NPM package](https://www.npmjs.com/package/grammarify)
