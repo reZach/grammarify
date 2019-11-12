@@ -105,9 +105,6 @@ function Grammarify(){
                 if (i > 0){
                     endingPunctuationIndex = endingPunctuation[i-1] !== "";
                 }                
-                if (newWords[i] === 'n/a') {
-                    newWords[i] = newWords[i].toUpperCase();
-                }
                 if (i === 0 || endingPunctuationIndex){
                     newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substr(1);
                 }
@@ -290,6 +287,7 @@ function Grammarify_SMS(){
         // N
         "nite": "night",
         "na": "n/a",
+        "n/a": "N/A",
 
         // O
         "omg": "oh my gosh",
