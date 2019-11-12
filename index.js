@@ -286,7 +286,7 @@ function Grammarify_SMS(){
 
         // N
         "nite": "night",
-        "na": "n/a",
+        "na": "N/A",
         "n/a": "N/A",
 
         // O
