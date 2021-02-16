@@ -1,14 +1,14 @@
-var spellchecker = require("spellchecker");
+const spellchecker = require("spellchecker");
 
 exports = module.exports = new Grammarify();
 
 function Grammarify(){
 
     // Private variables
-    var preProcessMap = new Grammarify_PreProcess();
-    var smsMap = new Grammarify_SMS();
-    var disconnectedMap = new Grammarify_Disconnected();
-    var numberMap = new Grammarify_Numbers();
+    const preProcessMap = new Grammarify_PreProcess();
+    const smsMap = new Grammarify_SMS();
+    const disconnectedMap = new Grammarify_Disconnected();
+    const numberMap = new Grammarify_Numbers();
 
     return {
         clean: function(string){
@@ -28,8 +28,8 @@ function Grammarify(){
             string = preProcessMap.fixSpaceAfterCharacter(string);
 
             // Get rid of all whitespace
-            var words = string.split(" ");
-            var newWords = words.filter(w => w.length !== 0);
+            const words = string.split(" ");
+            let newWords = words.filter(w => w.length !== 0);
 
             // Fix stretched words
             newWords = smsMap.fixStretching(newWords);
@@ -43,8 +43,8 @@ function Grammarify(){
             newWords = disconnectedMap.fixSeparated(newWords);
 
             // Save where there is existing punctuation
-            var endingPunctuation = [];
-            for (var i = 0; i < newWords.length; i++){
+            let endingPunctuation = [];
+            for (let i = 0; i < newWords.length; i++){
                 if (newWords[i].indexOf(".") >= 0){
                     endingPunctuation.push(".");
                 } else if (newWords[i].indexOf("!") >= 0){
@@ -59,14 +59,14 @@ function Grammarify(){
             
             // Clean the sentence;
             // main logic loop
-            var duplicates = ["the", "a", "an", "and", "but", "or", "nor", "for", "so", "yet"];
-            var corrections = [];
-            var endingPunctuationIndex = false;
-            var lastCharacter = "";
-            var spcheckThisWord = "";
-            var preSpellcheck = "";
-            var preSpellcheckEndingPunct = "";
-            for (var i = 0; i < newWords.length; i++){
+            const duplicates = ["the", "a", "an", "and", "but", "or", "nor", "for", "so", "yet"];
+            let corrections = [];
+            let endingPunctuationIndex = false;
+            let lastCharacter = "";
+            let spcheckThisWord = "";
+            let preSpellcheck = "";
+            let preSpellcheckEndingPunct = "";
+            for (let i = 0; i < newWords.length; i++){
 
                 // Remove words that are safe to delete if duplicated after each other
                 if (i > 0 && 
@@ -116,7 +116,7 @@ function Grammarify(){
             }
 
             // Add ending period if necessary
-            var lastWord = newWords.length - 1;
+            const lastWord = newWords.length - 1;
 
             // Only if the word doesn't already end in punctuation
             lastCharacter = newWords[lastWord][newWords[lastWord].length-1];
@@ -135,22 +135,22 @@ function Grammarify_PreProcess(){
 
     // Valid characters to fix;
     // cannot be duplicated
-    var validCharsToFix = [",", ";", ":", "%"];
+    const validCharsToFix = [",", ";", ":", "%"];
 
-    var fixer = function(input, charToFix){
+    const fixer = function(input, charToFix){
         
         // Remove this character from the beginning of the string
-        var regex = new RegExp("^[ \\" + charToFix + ".]+", "g");
+        let regex = new RegExp("^[ \\" + charToFix + ".]+", "g");
         input = input.replace(regex, "");
 
         // Capture all instances of this character
         regex = new RegExp("\\b([ \\" + charToFix + "]*\\" + charToFix + "[ \\" + charToFix + "]*)(\\b|$)", "g");
-        var badMatches = input.match(regex);
-        var badMatchesIndex = 0;
-        var tempSearch = "";
+        const badMatches = input.match(regex);
+        let badMatchesIndex = 0;
+        let tempSearch = "";
 
         if (badMatches !== null){
-            for (var i = 0; i < badMatches.length; i++){
+            for (let i = 0; i < badMatches.length; i++){
                 badMatchesIndex = input.indexOf(badMatches[i], badMatchesIndex);
 
                 tempSearch = input.substr(badMatchesIndex);
@@ -180,12 +180,12 @@ function Grammarify_PreProcess(){
             // Remove periods from the beginning of the string
             input = input.replace(/^[ \.]+/g, "");
             
-            var badPeriods = input.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
-            var badPeriodsIndex = 0;
-            var tempSearch = "";
+            const badPeriods = input.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
+            let badPeriodsIndex = 0;
+            let tempSearch = "";
             
             if (badPeriods !== null){
-                for (var i = 0; i < badPeriods.length; i++){
+                for (let i = 0; i < badPeriods.length; i++){
                     badPeriodsIndex = input.indexOf(badPeriods[i], badPeriodsIndex);
                     
                     // If we only find a single period;
@@ -218,7 +218,7 @@ function Grammarify_PreProcess(){
         fixSpaceAfterCharacter: function(input){
 
             // Process all characters we can fix
-            for (var i = 0; i < validCharsToFix.length; i++){
+            for (let i = 0; i < validCharsToFix.length; i++){
                 input = fixer(input, validCharsToFix[i]);
             }
 
@@ -229,7 +229,7 @@ function Grammarify_PreProcess(){
 
 function Grammarify_SMS(){
 
-    var map = {
+    const map = {
         // #s
         "2night": "tonight",
         "2nite": "tonight",
@@ -334,7 +334,7 @@ function Grammarify_SMS(){
         
     };
 
-    var unstretchify = function(word, indicees, pivot){
+    const unstretchify = function(word, indicees, pivot){
 
         // Base cases;
         // word matches to a shorthand map we have defined
@@ -353,7 +353,7 @@ function Grammarify_SMS(){
         } else {
 
             // Alter indicees array
-            var indiceesArrayIndex = pivot > 0 ? pivot - 1 : indicees.length-1;
+            const indiceesArrayIndex = pivot > 0 ? pivot - 1 : indicees.length-1;
 
             if (indicees[indiceesArrayIndex].endIndex > indicees[indiceesArrayIndex].startIndex){
                 indicees[indiceesArrayIndex].endIndex = indicees[indiceesArrayIndex].endIndex - 1;
@@ -377,7 +377,7 @@ function Grammarify_SMS(){
 
     return {
         fixStretching: function(input){
-            var container = [];
+            let container = [];
 
             // Create the data we are transforming
             if (Array.isArray(input)){
@@ -389,13 +389,13 @@ function Grammarify_SMS(){
             }
 
             // Fix the input
-            var stretchedIndicees = [];
-            var lastMarkedChar = "";
-            var tempWord = "";
-            for (var i = 0; i < container.length; i++){
+            let stretchedIndicees = [];
+            let lastMarkedChar = "";
+            let tempWord = "";
+            for (let i = 0; i < container.length; i++){
 
                 // Identify stretched characters within the word
-                for (var j = 0; j < container[i].length; j++){
+                for (let j = 0; j < container[i].length; j++){
 
                     if (j > 0){
 
@@ -425,10 +425,10 @@ function Grammarify_SMS(){
                     typeof container[i] !== "undefined" &&
                     spellchecker.isMisspelled(container[i])){
 
-                    var fixed = "";
-                    var staticIndicees = JSON.parse(JSON.stringify(stretchedIndicees)); // Deep copy array
+                    let fixed = "";
+                    let staticIndicees = JSON.parse(JSON.stringify(stretchedIndicees)); // Deep copy array
  
-                    for (var pivot = 0; pivot < staticIndicees.length; pivot++){
+                    for (let pivot = 0; pivot < staticIndicees.length; pivot++){
                         fixed = unstretchify(container[i], staticIndicees, pivot);
 
                         if (fixed !== ""){
@@ -448,9 +448,9 @@ function Grammarify_SMS(){
             return container;
         },
         fixShorthand: function(input){
-            var punctuation = "";
-            var container = [];
-            var stripped = "";
+            let punctuation = "";
+            let container = [];
+            let stripped = "";
 
             // Create the data we are transforming
             if (Array.isArray(input)){
@@ -462,7 +462,7 @@ function Grammarify_SMS(){
             }
 
             // Fix the input
-            for (var i = 0; i < container.length; i++){
+            for (let i = 0; i < container.length; i++){
 
                 // Save existing punctuation
                 stripped = container[i].match(/([a-zA-Z0-9']*)([\?!\.;+]*)$/);
@@ -489,7 +489,7 @@ function Grammarify_SMS(){
 
 function Grammarify_Disconnected(){
     
-    var list = [
+    const list = [
         // A
         "awesome",
 
@@ -552,9 +552,7 @@ function Grammarify_Disconnected(){
     
     return {
         fixSeparated: function(input){
-            var punctuation = "";
-            var container = [];
-            var stripped = "";
+            let container = [];
 
             // Create the data we are transforming
             if (Array.isArray(input)){
@@ -566,9 +564,9 @@ function Grammarify_Disconnected(){
             }
 
             // Fix the input
-            var listIndex = 0;
+            let listIndex = 0;
             if (container.length > 1){
-                for (var i = 1; i < container.length; i++){
+                for (let i = 1; i < container.length; i++){
 
                     // If we found a match
                     listIndex = list.indexOf((container[i-1] + container[i]).toLowerCase());
