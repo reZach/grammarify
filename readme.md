@@ -1,9 +1,9 @@
 Grammarify is a npm package that safely cleans up text that has mispellings, improper capitalization, lexical illusions, among other things.
- 
 
 ## How to use
 ```
-var grammarify = require("grammarify");
+const Grammarify = require("grammarify");
+const grammarify = new Grammarify()
 
 var sentence = "im so   borrreeedddd";
 console.log(grammarify.clean(sentence)); // "I'm so bored."
@@ -28,7 +28,7 @@ _(Some words are grammatically correct if repeated twice, words that are not are
 "I was mad becuase I left home early." -> "I was mad because I left home early."
 ```
 
-##### Captialize words at the beginning of sentences
+##### Capitalize words at the beginning of sentences
 ```
 "I like to run. he runs faster than I." -> "I like to run. He runs faster than I."
 ```
@@ -74,6 +74,32 @@ _(Intended ellipsis are any two or more periods separated by any number of perio
 " what a daay. i must have had 1,,000 shots" -> "What a day. I must have had 1,000 shots."
 ```
 ---
+
+##### Can run in Node or the browser
+NOTE: Spellcheck is not supported, and will not function in the browser.
+
+## Configuration
+
+##### You may pass a config object to the Grammarify instance
+```
+const Grammarify = require("grammarify");
+const grammarify = new Grammarify({
+    spellcheck: true,          // default; this is automatically-disabled in browsers
+    skipURLs:, false           // default; automatically returns any URL-formatted string, unmodified
+    wordMap: {                 // automatically replace shorthand strings
+        "2night": "tonight",
+        "2nite": "tonight",
+        "asap": "as soon as possible",
+        ...
+    },
+    disconnectedList: [        // automatically concat disconnected words
+        "awesome",
+        "everything",
+        "herself",
+        ...
+    ]
+})
+```
 
 ## Bugs or suggestions?
 Go to our [Github page](https://github.com/reZach/grammarify).

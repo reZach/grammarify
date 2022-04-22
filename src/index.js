@@ -1,21 +1,100 @@
-const spellchecker = require("spellchecker");
+let spellchecker;
+let spellcheck = true;
+let skipURLs = false;
 
-exports = module.exports = new Grammarify();
+if (typeof window === 'undefined') {
+    spellchecker = require("spellchecker");
+} else {
+    spellcheck = false;
+}
 
-function Grammarify(){
+exports = module.exports = function Grammarify(opts){
+
+    // Global options
+    opts = opts || {
+        spellcheck: true,
+        skipURLs: false,
+        wordMap: {
+            "2night": "tonight",
+            "2nite": "tonight",
+            "asap": "as soon as possible",
+            "asl": "American Sign Language",
+            "bc": "because",
+            "bf": "boyfriend",
+            "btw": "by the way",
+            "cuz": "because",
+            "eg": "example",
+            "els": "else",
+            "f": "female",
+            "ftw": "for the win",
+            "fyi": "for your information",
+            "gf": "girlfriend",
+            "gotta": "got to",
+            "gr8": "great",
+            "hada": "had a",
+            "hmu": "hit me up",
+            "hr": "hour",
+            "hrs": "hours",
+            "idk": "I don't know",
+            "im": "I'm",
+            "jude": "Jude", // how to expand this to all proper nouns??
+            "kinda": "kind of",
+            "m": "male",
+            "msg": "message",
+            "nite": "night",
+            "na": "N/A",
+            "n/a": "N/A",
+            "omg": "oh my gosh",
+            "pls": "please",
+            "plz": "please",
+            "ppl": "people",           
+            "tbh": "to be honest",
+            "tho": "though",
+            "thru": "through",
+            "tryna": "trying to",
+            "u": "you",
+            "w": "with",
+            "wanna": "want to",
+            "whaat": "what", // spellchecker library thinks this is a word
+            "whaaat": "what", // spellchecker library thinks this is a word
+            "wk": "week",
+            "wks": "weeks",
+            "wtf": "what the fuck",
+            "wth": "what the heck",
+            "wya": "where are you at",
+            "yknow": "you know"
+        },
+        disconnectedList: [
+            "awesome",
+            "everything",
+            "herself",
+            "himself",
+            "nowhere",
+            "today",
+            "yourself"
+        ]               
+        
+    }
 
     // Private variables
     const preProcessMap = new Grammarify_PreProcess();
-    const smsMap = new Grammarify_SMS();
-    const disconnectedMap = new Grammarify_Disconnected();
+    const smsMap = new Grammarify_SMS(opts.wordMap);
+    const disconnectedMap = new Grammarify_Disconnected(opts.disconnectedList);
     const numberMap = new Grammarify_Numbers();
 
     return {
         clean: function(string){
+
+            spellcheck = opts.spellcheck
+            skipURLs = opts.skipURLs || false
+            if (skipURLs === true) {
+                // If URL formatting is found, just return the string untouched.
+                if (string.match(`(?:\/\/)`)) return string
+            }
+
             if (string.length === 0){
                 return "";
             }
-
 
             // Replace unicode characters that break parsing
             string = string
@@ -87,7 +166,7 @@ function Grammarify(){
                 } else {
                     spcheckThisWord = newWords[i];
                 }
-                if (spellchecker.isMisspelled(spcheckThisWord)){
+                if (spellcheck === true && spellchecker.isMisspelled(spcheckThisWord)){
                     corrections = spellchecker.getCorrectionsForMisspelling(spcheckThisWord);
                     
                     if (corrections.length > 0){
@@ -104,13 +183,22 @@ function Grammarify(){
                 // Capitalize words if necessary
                 if (i > 0){
                     endingPunctuationIndex = endingPunctuation[i-1] !== "";
-                }                
-                if (i === 0 || endingPunctuationIndex){
-                    newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substr(1);
+                }        
+                // These extra comparisons address some edge cases where an elipsis would result in a capitalized
+                // word following it. For example, this:
+                //   "I was thinking yesterday... to test you."
+                // Would result in this:
+                //   "I was thinking yesterday... To test you."
+                if (i === 0 || endingPunctuationIndex && !newWords[i-1].endsWith('..') && !newWords[i-2].endsWith('..')){
+                    newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substring(1);
                 }
 
-                // Add leading space to word
-                if (i !== 0){
+                // Add a leading space to words
+                // The additional comparison addresses an edge case where the following statement:
+                //   "I was thinking yesterday..that I should go outside."
+                // Would turn into this:
+                //   "I was thinking yesterday.. . that I should go outside."
+                if (i !== 0 && newWords[i] !== '.'){
                     newWords[i] = " " + newWords[i];
                 }
             }
@@ -119,13 +207,13 @@ function Grammarify(){
             const lastWord = newWords.length - 1;
 
             // Only if the word doesn't already end in punctuation
-            lastCharacter = newWords[lastWord][newWords[lastWord].length-1];
+            lastCharacter = newWords[lastWord][newWords[lastWord].length - 1];
             if (lastCharacter !== "." &&
                 lastCharacter !== "!" &&
                 lastCharacter !== "?"){
                     newWords[lastWord] = newWords[lastWord] + ".";
                 }
-
+                
             return newWords.join("");
         }
     }    
@@ -153,7 +241,7 @@ function Grammarify_PreProcess(){
             for (let i = 0; i < badMatches.length; i++){
                 badMatchesIndex = input.indexOf(badMatches[i], badMatchesIndex);
 
-                tempSearch = input.substr(badMatchesIndex);
+                tempSearch = input.substring(badMatchesIndex);
 
                 // Corner-case;
                 // don't add space if fixing this
@@ -165,7 +253,7 @@ function Grammarify_PreProcess(){
                     tempSearch = tempSearch.replace(badMatches[i], (charToFix + " "));
                 }
                 
-                input = input.substr(0, badMatchesIndex) + tempSearch;
+                input = input.substring(0, badMatchesIndex) + tempSearch;
 
                 badMatchesIndex++;
             }
@@ -179,7 +267,7 @@ function Grammarify_PreProcess(){
 
             // Remove periods from the beginning of the string
             input = input.replace(/^[ \.]+/g, "");
-            
+
             const badPeriods = input.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
             let badPeriodsIndex = 0;
             let tempSearch = "";
@@ -193,9 +281,9 @@ function Grammarify_PreProcess(){
                     //     "the pig .ran"
                     //     "the pig . ran"
                     if (badPeriods[i].split(".").length == 2){
-                        tempSearch = input.substr(badPeriodsIndex);
+                        tempSearch = input.substring(badPeriodsIndex);
                         tempSearch = tempSearch.replace(badPeriods[i], ". ");
-                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+                        input = input.substring(0, badPeriodsIndex) + tempSearch;
 
                         badPeriodsIndex++;
                     } else if (badPeriods[i].split(".").length >= 3){
@@ -204,15 +292,15 @@ function Grammarify_PreProcess(){
                         // ie. "the pig..ran"
                         //     "the pig ..ran"
                         //     "the pig .. ran"
-                        tempSearch = input.substr(badPeriodsIndex);
+                        tempSearch = input.substring(badPeriodsIndex);
                         tempSearch = tempSearch.replace(badPeriods[i], "... ");
-                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+                        input = input.substring(0, badPeriodsIndex) + tempSearch;
 
                         badPeriodsIndex++;
                     }
                 }
             }
-            
+
             return input;
         },
         fixSpaceAfterCharacter: function(input){
@@ -227,112 +315,7 @@ function Grammarify_PreProcess(){
     }
 }
 
-function Grammarify_SMS(){
-
-    const map = {
-        // #s
-        "2night": "tonight",
-        "2nite": "tonight",
-
-        // A
-        "asap": "as soon as possible",
-        "asl": "American Sign Language",
-
-        // B
-        "bc": "because",
-        "bf": "boyfriend",
-        "btw": "by the way",
-
-        // C
-        "cuz": "because",
-
-        // D
-
-        // E
-        "eg": "example",
-        "els": "else",
-
-        // F
-        "f": "female",
-        "ftw": "for the win",
-        "fyi": "for your information",
-
-        // G
-        "gf": "girlfriend",
-        "gotta": "got to",
-        "gr8": "great",
-
-        // H
-        "hada": "had a",
-        "hmu": "hit me up",
-        "hr": "hour",
-        "hrs": "hours",
-
-        // I
-        "idk": "I don't know",
-        "im": "I'm",
-
-        // J
-        "jude": "Jude", // how to expand this to all proper nouns??
-
-        // K
-        "kinda": "kind of",
-
-        // L
-
-        // M
-        "m": "male",
-        "msg": "message",
-
-        // N
-        "nite": "night",
-        "na": "N/A",
-        "n/a": "N/A",
-
-        // O
-        "omg": "oh my gosh",
-
-        // P
-        "pls": "please",
-        "plz": "please",
-        "ppl": "people",           
-
-        // Q
-
-        // R
-
-        // S
-
-        // T
-        "tbh": "to be honest",
-        "tho": "though",
-        "thru": "through",
-        "tryna": "trying to",
-
-        // U
-        "u": "you",
-
-        // V
-
-        // W
-        "w": "with",
-        "wanna": "want to",
-        "whaat": "what", // spellchecker library thinks this is a word
-        "whaaat": "what", // spellchecker library thinks this is a word
-        "wk": "week",
-        "wks": "weeks",
-        "wtf": "what the fuck",
-        "wth": "what the heck",
-        "wya": "where are you at",
-
-        // X
-
-        // Y
-        "yknow": "you know"
-
-        // Z
-        
-    };
+function Grammarify_SMS(map){
 
     const unstretchify = function(word, indicees, pivot){
 
@@ -340,7 +323,7 @@ function Grammarify_SMS(){
         // word matches to a shorthand map we have defined
         if (typeof map[word] !== "undefined"){
             return map[word];
-        } else if (!spellchecker.isMisspelled(word)){
+        } else if (spellcheck === true && !spellchecker.isMisspelled(word)){
             
             // The word is not misspelled
             return word;
@@ -360,7 +343,7 @@ function Grammarify_SMS(){
 
                 // Chop off duplicate letter in word,
                 // this is how we work to the base case
-                word = word.substr(0, indicees[indiceesArrayIndex].startIndex) + word.substr(indicees[indiceesArrayIndex].startIndex+1);
+                word = word.substring(0, indicees[indiceesArrayIndex].startIndex) + word.substring(indicees[indiceesArrayIndex].startIndex+1);
             } else {
 
                 // Change the pivot
@@ -421,7 +404,8 @@ function Grammarify_SMS(){
 
                 // Only fix word if it isn't shorthand and
                 // it is incorrect
-                if (stretchedIndicees.length > 0 &&
+                if (spellcheck === true &&
+                    stretchedIndicees.length > 0 &&
                     typeof container[i] !== "undefined" &&
                     spellchecker.isMisspelled(container[i])){
 
@@ -487,68 +471,7 @@ function Grammarify_SMS(){
     }
 }
 
-function Grammarify_Disconnected(){
-    
-    const list = [
-        // A
-        "awesome",
-
-        // B
-
-        // C
-
-        // D
-
-        // E
-        "everything",
-
-        // F
-
-        // G
-
-        // H
-        "herself",
-        "himself",
-
-        // I
-
-        // J
-
-        // K
-
-        // L
-
-        // M
-
-        // N
-        "nowhere",
-
-        // O
-
-        // P
-
-        // Q
-
-        // R
-
-        // S
-
-        // T
-        "today",
-
-        // U
-
-        // V
-
-        // W
-
-        // X
-
-        // Y
-        "yourself"
-
-        // Z
-    ];
+function Grammarify_Disconnected(list){
     
     return {
         fixSeparated: function(input){

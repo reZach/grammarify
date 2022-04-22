@@ -1,6 +1,6 @@
 {
   "name": "grammarify",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Grammarify is a npm package that performs safe cleaning of text. Examples of safe cleaning include capitalizing the beginning of sentences, spellchecking mispelled words, changing SMS-speak to full words, fixed stretched words (ie. 'borrreedd'), removing lexical illusions (ie. multiple 'the the dog') and combining words that are mistaken separated (ie. 'her self' to 'herself').",
   "keywords": [
     "spelling",
@@ -13,7 +13,8 @@
   ],
   "main": "./lib/index.js",
   "scripts": {
-    "build": "npx babel ./src -d ./lib"
+    "build": "npx babel ./src -d ./lib",
+    "test": "jest --coverage --testPathPattern=./test"
   },
   "homepage": "https://github.com/reZach/grammarify",
   "author": "reZach",
@@ -22,7 +23,8 @@
     "@babel/cli": "^7.12.16",
     "@babel/core": "^7.12.16",
     "@babel/preset-env": "^7.12.16",
-    "babel-preset-minify": "^0.5.1"
+    "babel-preset-minify": "^0.5.1",
+    "jest": "^27.5.1"
   },
   "dependencies": {
     "spellchecker": "3.7.1"
