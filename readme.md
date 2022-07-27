@@ -28,7 +28,7 @@ _(Some words are grammatically correct if repeated twice, words that are not are
 "I was mad becuase I left home early." -> "I was mad because I left home early."
 ```
 
-##### Captialize words at the beginning of sentences
+##### Capitalize words at the beginning of sentences
 ```
 "I like to run. he runs faster than I." -> "I like to run. He runs faster than I."
 ```

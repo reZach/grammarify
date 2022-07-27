@@ -1,8 +1,16 @@
-const spellchecker = require("spellchecker");
+const isBrowser = typeof window !== "undefined";
+let canSpellcheck = true;
+let spellchecker = null;
+
+if (!isBrowser) {
+    spellchecker = require("spellchecker");
+} else {
+    canSpellcheck = false;
+}
 
 exports = module.exports = new Grammarify();
 
-function Grammarify(){
+function Grammarify() {
 
     // Private variables
     const preProcessMap = new Grammarify_PreProcess();
@@ -11,8 +19,8 @@ function Grammarify(){
     const numberMap = new Grammarify_Numbers();
 
     return {
-        clean: function(string){
-            if (string.length === 0){
+        clean: function (string) {
+            if (string.length === 0) {
                 return "";
             }
 
@@ -44,19 +52,19 @@ function Grammarify(){
 
             // Save where there is existing punctuation
             let endingPunctuation = [];
-            for (let i = 0; i < newWords.length; i++){
-                if (newWords[i].indexOf(".") >= 0){
+            for (let i = 0; i < newWords.length; i++) {
+                if (newWords[i].indexOf(".") >= 0) {
                     endingPunctuation.push(".");
-                } else if (newWords[i].indexOf("!") >= 0){
+                } else if (newWords[i].indexOf("!") >= 0) {
                     endingPunctuation.push("!");
-                } else if (newWords[i].indexOf("?") >= 0){
-                    endingPunctuation.push("?");                    
+                } else if (newWords[i].indexOf("?") >= 0) {
+                    endingPunctuation.push("?");
                 } else {
                     endingPunctuation.push("");
                 }
             }
-            
-            
+
+
             // Clean the sentence;
             // main logic loop
             const duplicates = ["the", "a", "an", "and", "but", "or", "nor", "for", "so", "yet"];
@@ -66,12 +74,12 @@ function Grammarify(){
             let spcheckThisWord = "";
             let preSpellcheck = "";
             let preSpellcheckEndingPunct = "";
-            for (let i = 0; i < newWords.length; i++){
+            for (let i = 0; i < newWords.length; i++) {
 
                 // Remove words that are safe to delete if duplicated after each other
-                if (i > 0 && 
-                    newWords[i] === newWords[i-1].trim().toLowerCase() &&
-                    duplicates.indexOf(newWords[i].toLowerCase()) >= 0){
+                if (i > 0 &&
+                    newWords[i] === newWords[i - 1].trim().toLowerCase() &&
+                    duplicates.indexOf(newWords[i].toLowerCase()) >= 0) {
 
                     newWords.splice(i, 1);
                     i--;
@@ -82,35 +90,35 @@ function Grammarify(){
                 // remove ending punctuation first
                 preSpellcheck = newWords[i].match(/[\W]+$/g);
 
-                if (preSpellcheck !== null){
+                if (preSpellcheck !== null) {
                     spcheckThisWord = newWords[i].replace(/[\W]+$/g, "");
                 } else {
                     spcheckThisWord = newWords[i];
                 }
-                if (spellchecker.isMisspelled(spcheckThisWord)){
+                if (canSpellcheck && spellchecker.isMisspelled(spcheckThisWord)) {
                     corrections = spellchecker.getCorrectionsForMisspelling(spcheckThisWord);
-                    
-                    if (corrections.length > 0){
+
+                    if (corrections.length > 0) {
                         newWords[i] = corrections[0];
                         corrections = [];
 
                         // Add ending punctuation back in
-                        if (preSpellcheck !== null){
+                        if (preSpellcheck !== null) {
                             newWords[i] = newWords[i] + preSpellcheck[0];
                         }
                     }
                 }
 
                 // Capitalize words if necessary
-                if (i > 0){
-                    endingPunctuationIndex = endingPunctuation[i-1] !== "";
-                }                
-                if (i === 0 || endingPunctuationIndex){
-                    newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substr(1);
+                if (i > 0) {
+                    endingPunctuationIndex = endingPunctuation[i - 1] !== "";
+                }
+                if (i === 0 || endingPunctuationIndex) {
+                    newWords[i] = newWords[i][0].toUpperCase() + newWords[i].substring(1);
                 }
 
                 // Add leading space to word
-                if (i !== 0){
+                if (i !== 0) {
                     newWords[i] = " " + newWords[i];
                 }
             }
@@ -119,26 +127,26 @@ function Grammarify(){
             const lastWord = newWords.length - 1;
 
             // Only if the word doesn't already end in punctuation
-            lastCharacter = newWords[lastWord][newWords[lastWord].length-1];
+            lastCharacter = newWords[lastWord][newWords[lastWord].length - 1];
             if (lastCharacter !== "." &&
                 lastCharacter !== "!" &&
-                lastCharacter !== "?"){
-                    newWords[lastWord] = newWords[lastWord] + ".";
-                }
+                lastCharacter !== "?") {
+                newWords[lastWord] = newWords[lastWord] + ".";
+            }
 
             return newWords.join("");
         }
-    }    
+    }
 }
 
-function Grammarify_PreProcess(){
+function Grammarify_PreProcess() {
 
     // Valid characters to fix;
     // cannot be duplicated
     const validCharsToFix = [",", ";", ":", "%"];
 
-    const fixer = function(input, charToFix){
-        
+    const fixer = function (input, charToFix) {
+
         // Remove this character from the beginning of the string
         let regex = new RegExp("^[ \\" + charToFix + ".]+", "g");
         input = input.replace(regex, "");
@@ -149,23 +157,23 @@ function Grammarify_PreProcess(){
         let badMatchesIndex = 0;
         let tempSearch = "";
 
-        if (badMatches !== null){
-            for (let i = 0; i < badMatches.length; i++){
+        if (badMatches !== null) {
+            for (let i = 0; i < badMatches.length; i++) {
                 badMatchesIndex = input.indexOf(badMatches[i], badMatchesIndex);
 
-                tempSearch = input.substr(badMatchesIndex);
+                tempSearch = input.substring(badMatchesIndex);
 
                 // Corner-case;
                 // don't add space if fixing this
                 // 3,,000
                 if (badMatchesIndex + badMatches[i].length < input.length &&
-                    input[badMatchesIndex + badMatches[i].length + 1].match(/\d/) !== null){
+                    input[badMatchesIndex + badMatches[i].length + 1].match(/\d/) !== null) {
                     tempSearch = tempSearch.replace(badMatches[i], charToFix);
                 } else {
                     tempSearch = tempSearch.replace(badMatches[i], (charToFix + " "));
                 }
-                
-                input = input.substr(0, badMatchesIndex) + tempSearch;
+
+                input = input.substring(0, badMatchesIndex) + tempSearch;
 
                 badMatchesIndex++;
             }
@@ -175,50 +183,50 @@ function Grammarify_PreProcess(){
     };
 
     return {
-        fixPeriodAndEllipsis: function(input){
+        fixPeriodAndEllipsis: function (input) {
 
             // Remove periods from the beginning of the string
             input = input.replace(/^[ \.]+/g, "");
-            
+
             const badPeriods = input.match(/\b([ \.]*\.[ \.]*)(\b|$)/g);
             let badPeriodsIndex = 0;
             let tempSearch = "";
-            
-            if (badPeriods !== null){
-                for (let i = 0; i < badPeriods.length; i++){
+
+            if (badPeriods !== null) {
+                for (let i = 0; i < badPeriods.length; i++) {
                     badPeriodsIndex = input.indexOf(badPeriods[i], badPeriodsIndex);
-                    
+
                     // If we only find a single period;
                     // ie. "the pig.ran"
                     //     "the pig .ran"
                     //     "the pig . ran"
-                    if (badPeriods[i].split(".").length == 2){
-                        tempSearch = input.substr(badPeriodsIndex);
+                    if (badPeriods[i].split(".").length === 2) {
+                        tempSearch = input.substring(badPeriodsIndex);
                         tempSearch = tempSearch.replace(badPeriods[i], ". ");
-                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+                        input = input.substring(0, badPeriodsIndex) + tempSearch;
 
                         badPeriodsIndex++;
-                    } else if (badPeriods[i].split(".").length >= 3){
-                        
+                    } else if (badPeriods[i].split(".").length >= 3) {
+
                         // If we find an ellipsis-like pattern;
                         // ie. "the pig..ran"
                         //     "the pig ..ran"
                         //     "the pig .. ran"
-                        tempSearch = input.substr(badPeriodsIndex);
+                        tempSearch = input.substring(badPeriodsIndex);
                         tempSearch = tempSearch.replace(badPeriods[i], "... ");
-                        input = input.substr(0, badPeriodsIndex) + tempSearch;
+                        input = input.substring(0, badPeriodsIndex) + tempSearch;
 
                         badPeriodsIndex++;
                     }
                 }
             }
-            
+
             return input;
         },
-        fixSpaceAfterCharacter: function(input){
+        fixSpaceAfterCharacter: function (input) {
 
             // Process all characters we can fix
-            for (let i = 0; i < validCharsToFix.length; i++){
+            for (let i = 0; i < validCharsToFix.length; i++) {
                 input = fixer(input, validCharsToFix[i]);
             }
 
@@ -227,7 +235,7 @@ function Grammarify_PreProcess(){
     }
 }
 
-function Grammarify_SMS(){
+function Grammarify_SMS() {
 
     const map = {
         // #s
@@ -295,7 +303,7 @@ function Grammarify_SMS(){
         // P
         "pls": "please",
         "plz": "please",
-        "ppl": "people",           
+        "ppl": "people",
 
         // Q
 
@@ -331,21 +339,23 @@ function Grammarify_SMS(){
         "yknow": "you know"
 
         // Z
-        
+
     };
 
-    const unstretchify = function(word, indicees, pivot){
+    const unstretchify = function (word, indicees, pivot) {
 
         // Base cases;
         // word matches to a shorthand map we have defined
-        if (typeof map[word] !== "undefined"){
+        if (typeof map[word] !== "undefined") {
             return map[word];
-        } else if (!spellchecker.isMisspelled(word)){
-            
+        } else if (!spellchecker.isMisspelled(word)) {
+
             // The word is not misspelled
             return word;
-        } else if (indicees.reduce((acc, cur) => {return acc + (cur.endIndex - cur.startIndex);}, 0) === 0){
-            
+        } else if (indicees.reduce((acc, cur) => {
+                return acc + (cur.endIndex - cur.startIndex);
+            }, 0) === 0) {
+
             // Above check could use optimization;
             // exit if we've iterated fully over
             // this particular pivot value
@@ -353,18 +363,18 @@ function Grammarify_SMS(){
         } else {
 
             // Alter indicees array
-            const indiceesArrayIndex = pivot > 0 ? pivot - 1 : indicees.length-1;
+            const indiceesArrayIndex = pivot > 0 ? pivot - 1 : indicees.length - 1;
 
-            if (indicees[indiceesArrayIndex].endIndex > indicees[indiceesArrayIndex].startIndex){
+            if (indicees[indiceesArrayIndex].endIndex > indicees[indiceesArrayIndex].startIndex) {
                 indicees[indiceesArrayIndex].endIndex = indicees[indiceesArrayIndex].endIndex - 1;
 
                 // Chop off duplicate letter in word,
                 // this is how we work to the base case
-                word = word.substr(0, indicees[indiceesArrayIndex].startIndex) + word.substr(indicees[indiceesArrayIndex].startIndex+1);
+                word = word.substring(0, indicees[indiceesArrayIndex].startIndex) + word.substring(indicees[indiceesArrayIndex].startIndex + 1);
             } else {
 
                 // Change the pivot
-                if (pivot > 0){
+                if (pivot > 0) {
                     pivot = pivot - 1;
                 } else {
                     pivot = indicees.length - 1;
@@ -376,13 +386,13 @@ function Grammarify_SMS(){
     };
 
     return {
-        fixStretching: function(input){
+        fixStretching: function (input) {
             let container = [];
 
             // Create the data we are transforming
-            if (Array.isArray(input)){
+            if (Array.isArray(input)) {
                 container = input;
-            } else if (typeof input === "string"){
+            } else if (typeof input === "string") {
                 container = input.split(" ");
             } else {
                 return "";
@@ -392,26 +402,26 @@ function Grammarify_SMS(){
             let stretchedIndicees = [];
             let lastMarkedChar = "";
             let tempWord = "";
-            for (let i = 0; i < container.length; i++){
+            for (let i = 0; i < container.length; i++) {
 
                 // Identify stretched characters within the word
-                for (let j = 0; j < container[i].length; j++){
+                for (let j = 0; j < container[i].length; j++) {
 
-                    if (j > 0){
+                    if (j > 0) {
 
                         // Save information about stretched letters
                         // ie. "preettyyyy"
-                        if (container[i][j] === container[i][j-1]){
+                        if (container[i][j] === container[i][j - 1]) {
 
-                            if (lastMarkedChar === ""){
+                            if (lastMarkedChar === "") {
                                 stretchedIndicees.push({
-                                    "startIndex": j-1,
-                                    "endIndex": j 
+                                    "startIndex": j - 1,
+                                    "endIndex": j
                                 });
                                 lastMarkedChar = container[i][j];
                             } else {
-                                stretchedIndicees[stretchedIndicees.length-1]["endIndex"] = j; 
-                            }                                                                      
+                                stretchedIndicees[stretchedIndicees.length - 1]["endIndex"] = j;
+                            }
                         } else {
                             lastMarkedChar = "";
                         }
@@ -421,17 +431,18 @@ function Grammarify_SMS(){
 
                 // Only fix word if it isn't shorthand and
                 // it is incorrect
-                if (stretchedIndicees.length > 0 &&
+                if (canSpellcheck &&
+                    stretchedIndicees.length > 0 &&
                     typeof container[i] !== "undefined" &&
-                    spellchecker.isMisspelled(container[i])){
+                    spellchecker.isMisspelled(container[i])) {
 
                     let fixed = "";
                     let staticIndicees = JSON.parse(JSON.stringify(stretchedIndicees)); // Deep copy array
- 
-                    for (let pivot = 0; pivot < staticIndicees.length; pivot++){
+
+                    for (let pivot = 0; pivot < staticIndicees.length; pivot++) {
                         fixed = unstretchify(container[i], staticIndicees, pivot);
 
-                        if (fixed !== ""){
+                        if (fixed !== "") {
                             container[i] = fixed;
                             break;
                         }
@@ -447,35 +458,35 @@ function Grammarify_SMS(){
 
             return container;
         },
-        fixShorthand: function(input){
+        fixShorthand: function (input) {
             let punctuation = "";
             let container = [];
             let stripped = "";
 
             // Create the data we are transforming
-            if (Array.isArray(input)){
+            if (Array.isArray(input)) {
                 container = input;
-            } else if (typeof input === "string"){
+            } else if (typeof input === "string") {
                 container = input.split(" ");
             } else {
                 return "";
             }
 
             // Fix the input
-            for (let i = 0; i < container.length; i++){
+            for (let i = 0; i < container.length; i++) {
 
                 // Save existing punctuation
                 stripped = container[i].match(/([a-zA-Z0-9']*)([\?!\.;+]*)$/);
-                if (typeof stripped[2] !== ""){
+                if (typeof stripped[2] !== "") {
                     punctuation = stripped[2];
                 }
-                
+
                 stripped = stripped[1]; // Sets stripped to input that was passed into the .match call
-                if (typeof map[stripped] !== "undefined"){
+                if (typeof map[stripped] !== "undefined") {
                     container[i] = map[stripped];
 
                     // Re-add punctuation back in
-                    if (punctuation !== ""){
+                    if (punctuation !== "") {
                         container[i] = container[i] + punctuation;
                         punctuation = "";
                     }
@@ -487,8 +498,8 @@ function Grammarify_SMS(){
     }
 }
 
-function Grammarify_Disconnected(){
-    
+function Grammarify_Disconnected() {
+
     const list = [
         // A
         "awesome",
@@ -549,15 +560,15 @@ function Grammarify_Disconnected(){
 
         // Z
     ];
-    
+
     return {
-        fixSeparated: function(input){
+        fixSeparated: function (input) {
             let container = [];
 
             // Create the data we are transforming
-            if (Array.isArray(input)){
+            if (Array.isArray(input)) {
                 container = input;
-            } else if (typeof input === "string"){
+            } else if (typeof input === "string") {
                 container = input.split(" ");
             } else {
                 return "";
@@ -565,13 +576,13 @@ function Grammarify_Disconnected(){
 
             // Fix the input
             let listIndex = 0;
-            if (container.length > 1){
-                for (let i = 1; i < container.length; i++){
+            if (container.length > 1) {
+                for (let i = 1; i < container.length; i++) {
 
                     // If we found a match
-                    listIndex = list.indexOf((container[i-1] + container[i]).toLowerCase());
-                    if (listIndex >= 0){
-                        container[i-1] = list[listIndex];
+                    listIndex = list.indexOf((container[i - 1] + container[i]).toLowerCase());
+                    if (listIndex >= 0) {
+                        container[i - 1] = list[listIndex];
 
                         container.splice(i, 1);
                         i--;
@@ -584,6 +595,6 @@ function Grammarify_Disconnected(){
     }
 }
 
-function Grammarify_Numbers(){
+function Grammarify_Numbers() {
 
 }
